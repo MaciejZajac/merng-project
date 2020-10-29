@@ -11,13 +11,12 @@ const httpLink = createHttpLink({
   uri: 'http://localhost:5000',
 });
 
-const authLink = setContext((_, { headers }) => {
+const authLink = setContext(() => {
   // get the authentication token from local storage if it exists
   const token = localStorage.getItem('jwtToken');
   // return the headers to the context so httpLink can read them
   return {
     headers: {
-      ...headers,
       authorization: token ? `Bearer ${token}` : '',
     },
   };
