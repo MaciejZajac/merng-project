@@ -1,7 +1,15 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import gql from 'graphql-tag';
-import { useQuery } from '@apollo/client';
-import { Button, Card, Grid, Icon, Image, Label } from 'semantic-ui-react';
+import { Reference, useMutation, useQuery } from '@apollo/client';
+import {
+  Button,
+  Card,
+  Form,
+  Grid,
+  Icon,
+  Image,
+  Label,
+} from 'semantic-ui-react';
 import moment from 'moment';
 import LikeButton from '../components/LikeButton';
 import { AuthContext } from '../context/auth';
@@ -10,11 +18,22 @@ import DeleteButton from '../components/DeleteButton';
 const SinglePost = (props: any) => {
   const { user } = useContext(AuthContext);
   const postId = props.match.params.postId;
-  console.log('postId', postId);
-
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  const [comment, setComment] = useState('');
   const { data } = useQuery(FETCH_POST_QUERY, {
     variables: {
       postId,
+    },
+  });
+
+  const [submitComment] = useMutation(SUBMIT_COMMENT_MUTATION, {
+    update() {
+      setComment('');
+      commentInputRef?.current?.blur();
+    },
+    variables: {
+      postId,
+      body: comment,
     },
   });
 
@@ -22,7 +41,6 @@ const SinglePost = (props: any) => {
     props.history.push('/');
   };
   let postMarkup;
-  console.log('data', data);
   if (!data?.getPost) {
     postMarkup = <p>Loading post...</p>;
   } else {
@@ -74,6 +92,46 @@ const SinglePost = (props: any) => {
                 )}
               </Card.Content>
             </Card>
+            {user && (
+              <Card fluid>
+                <Card.Content>
+                  <p>Post a comment</p>
+                  <Form>
+                    <div className='ui action input fluid'>
+                      <input
+                        type='text'
+                        placeholder='Comment...'
+                        name='comment'
+                        value={comment}
+                        // referencja bo semantic ui nie obsługuje ref
+                        ref={commentInputRef}
+                        onChange={(e: any) => setComment(e.target.value)}
+                      />
+                      <button
+                        type='submit'
+                        className='submit'
+                        disabled={comment.trim() === ''}
+                        onClick={submitComment as any}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </Form>
+                </Card.Content>
+              </Card>
+            )}
+            {comments.map((comment: any) => (
+              <Card fluid key={comment.id}>
+                <Card.Content>
+                  {user?.username === comment.username && (
+                    <DeleteButton postId={id} commentId={comment.id} />
+                  )}
+                  <Card.Header>{comment.username}</Card.Header>
+                  <Card.Meta>{moment(comment.createdAt).fromNow()}</Card.Meta>
+                  <Card.Description>{comment.body}</Card.Description>
+                </Card.Content>
+              </Card>
+            ))}
           </Grid.Column>
         </Grid.Row>
       </Grid>
@@ -81,6 +139,21 @@ const SinglePost = (props: any) => {
   }
   return postMarkup;
 };
+
+const SUBMIT_COMMENT_MUTATION = gql`
+  mutation($postId: ID!, $body: String!) {
+    createComment(postId: $postId, body: $body) {
+      id
+      comments {
+        id
+        body
+        createdAt
+        username
+      }
+      commentCount
+    }
+  }
+`;
 
 const FETCH_POST_QUERY = gql`
   query($postId: ID!) {

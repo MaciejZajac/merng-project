@@ -6,24 +6,28 @@ import { FETCH_POSTS_QUERY } from '../utils/graphql';
 interface IDeleteButton {
   postId: number;
   callback?: () => void;
+  commentId?: string;
 }
-const DeleteButton = ({ postId, callback }: IDeleteButton) => {
+const DeleteButton = ({ postId, callback, commentId }: IDeleteButton) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deletePost] = useMutation(DELETE_POST_MUTATION, {
+  const mutation = commentId ? DELETE_COMMENT_MUTATION : DELETE_POST_MUTATION;
+  const [deletePostOrMutation] = useMutation(mutation, {
     update(proxy) {
       setConfirmOpen(false);
-      const data: any = proxy.readQuery({
-        query: FETCH_POSTS_QUERY,
-      });
-      const newData = { ...data };
-      newData.getPosts = newData.getPosts.filter((p: any) => p.id !== postId);
+      if (!commentId) {
+        const data: any = proxy.readQuery({
+          query: FETCH_POSTS_QUERY,
+        });
+        const newData = { ...data };
+        newData.getPosts = newData.getPosts.filter((p: any) => p.id !== postId);
 
-      proxy.writeQuery({ query: FETCH_POSTS_QUERY, data: newData });
-
+        proxy.writeQuery({ query: FETCH_POSTS_QUERY, data: newData });
+      }
       callback?.();
     },
     variables: {
       postId,
+      commentId,
     },
   });
   return (
@@ -39,7 +43,7 @@ const DeleteButton = ({ postId, callback }: IDeleteButton) => {
       <Confirm
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={deletePost as any}
+        onConfirm={deletePostOrMutation as any}
       />
     </>
   );
@@ -48,6 +52,21 @@ const DeleteButton = ({ postId, callback }: IDeleteButton) => {
 const DELETE_POST_MUTATION = gql`
   mutation deletePost($postId: ID!) {
     deletePost(postId: $postId)
+  }
+`;
+
+const DELETE_COMMENT_MUTATION = gql`
+  mutation deleteComment($postId: ID!, $commentId: ID!) {
+    deleteComment(postId: $postId, commentId: $commentId) {
+      id
+      comments {
+        id
+        username
+        createdAt
+        body
+      }
+      commentCount
+    }
   }
 `;
 
