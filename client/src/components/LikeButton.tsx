@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client';
 import gql from 'graphql-tag';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Icon, Label } from 'semantic-ui-react';
 interface IPost {
@@ -15,7 +15,6 @@ interface ILikeButton {
 const LikeButton = ({ user, post: { id, likeCount, likes } }: ILikeButton) => {
   const [liked, setLiked] = useState(false);
   useEffect(() => {
-    console.log('likes', likes);
     if (user && likes.find((like: any) => like.username === user.username)) {
       setLiked(true);
     } else {

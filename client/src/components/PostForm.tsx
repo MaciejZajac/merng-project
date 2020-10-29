@@ -9,7 +9,7 @@ const PostForm = () => {
     body: '',
   });
 
-  const [createPost, { loading }] = useMutation(CREATE_POST_MUTATION, {
+  const [createPost] = useMutation(CREATE_POST_MUTATION, {
     update(proxy, result) {
       const data: any = proxy.readQuery({
         query: FETCH_POSTS_QUERY,
@@ -48,7 +48,7 @@ const PostForm = () => {
           </Button>
         </Form.Field>
       </Form>
-      {console.log('error', error)}
+
       {error && (
         <div className='ui error message' style={{ marginBottom: 20 }}>
           <ul className='list'>

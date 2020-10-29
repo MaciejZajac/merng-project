@@ -1,6 +1,6 @@
 import React, { useContext, useRef, useState } from 'react';
 import gql from 'graphql-tag';
-import { Reference, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {
   Button,
   Card,

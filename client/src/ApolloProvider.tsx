@@ -28,7 +28,6 @@ const client = new ApolloClient({
 });
 
 const Provider = () => {
-  console.log('client', client.cache);
   return (
     <ApolloProvider client={client}>
       <App />
